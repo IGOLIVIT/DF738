@@ -1,20 +1,19 @@
 //
-//  HomeView.swift
+//  GamesView.swift
 //  DF738
 //
 
 import SwiftUI
 
-struct HomeView: View {
+struct GamesView: View {
     @ObservedObject var rewardSystem = RewardSystem.shared
-    @State private var showingSettings = false
     @State private var selectedGame: GameType? = nil
     
     enum GameType: String, CaseIterable {
         case crossingSprint = "Asteroid Dash"
         case fallingGrain = "Cosmic Crystal Collector"
         case obstacleMeadow = "Space Runner"
-        case featherMemory = "Star Pattern Memory"
+        case featherMemory = "Cosmic Pattern"
         
         var icon: String {
             switch self {
@@ -79,23 +78,6 @@ struct HomeView: View {
                         }
                         .padding(.horizontal, 20)
                         
-                        // Settings Button
-                        Button(action: {
-                            showingSettings = true
-                        }) {
-                            HStack {
-                                Image(systemName: "gearshape.fill")
-                                Text("Settings")
-                                    .font(.system(size: 18, weight: .semibold))
-                            }
-                            .foregroundColor(Color("ElementAccent"))
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 16)
-                            .background(Color("BackgroundSecondary"))
-                            .cornerRadius(12)
-                        }
-                        .padding(.horizontal, 20)
-                        
                         Spacer()
                             .frame(height: 20)
                     }
@@ -103,9 +85,6 @@ struct HomeView: View {
             }
             .navigationDestination(for: GameType.self) { game in
                 gameView(for: game)
-            }
-            .navigationDestination(isPresented: $showingSettings) {
-                SettingsView()
             }
         }
     }
@@ -150,8 +129,8 @@ struct RewardBadge: View {
 }
 
 struct GameCard: View {
-    let game: HomeView.GameType
-    @Binding var selectedGame: HomeView.GameType?
+    let game: GamesView.GameType
+    @Binding var selectedGame: GamesView.GameType?
     @State private var isPressed = false
     
     var body: some View {

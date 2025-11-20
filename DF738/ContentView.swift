@@ -13,7 +13,7 @@ struct ContentView: View {
     var body: some View {
         ZStack {
             if isOnboardingComplete {
-                HomeView()
+                MainTabView()
             } else {
                 OnboardingView(isOnboardingComplete: $isOnboardingComplete)
             }

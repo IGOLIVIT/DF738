@@ -164,6 +164,7 @@ class CrossingSprintGameState: ObservableObject {
         
         RewardSystem.shared.addStars(earnedFeathers)
         RewardSystem.shared.recordSession(playTimeMinutes: 1)
+        RewardSystem.shared.recordGameSession(game: "asteroidDash", score: earnedFeathers, playTimeMinutes: 1)
     }
     
     func stopGame() {

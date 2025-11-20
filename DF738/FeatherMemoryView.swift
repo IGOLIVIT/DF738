@@ -171,6 +171,7 @@ class FeatherMemoryGameState: ObservableObject {
             RewardSystem.shared.addTrophies(1)
         }
         RewardSystem.shared.recordSession(playTimeMinutes: 1)
+        RewardSystem.shared.recordGameSession(game: "cosmicPattern", score: roundsCompleted, playTimeMinutes: 1)
     }
     
     func stopGame() {
@@ -293,7 +294,7 @@ struct FeatherMemoryReadyScreen: View {
             Text("🌟")
                 .font(.system(size: 100))
             
-            Text("Star Pattern Memory")
+            Text("Cosmic Pattern")
                 .font(.system(size: 28, weight: .bold))
                 .foregroundColor(Color("ElementAccent"))
             
@@ -336,7 +337,7 @@ struct FeatherMemoryResultScreen: View {
                 Text(gotGolden ? "🏆" : rounds >= 5 ? "🌟" : "💪")
                     .font(.system(size: 100))
                 
-                Text(gotGolden ? "Golden Trophy!" : rounds >= 5 ? "Great Memory!" : "Good Try!")
+                Text(gotGolden ? "Golden Trophy!" : rounds >= 5 ? "Great Pattern!" : "Good Try!")
                     .font(.system(size: 28, weight: .bold))
                     .foregroundColor(Color("ElementAccent"))
                 

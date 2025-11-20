@@ -243,6 +243,7 @@ class ObstacleMeadowGameState: ObservableObject {
         RewardSystem.shared.addStars(earnedFeathers)
         RewardSystem.shared.addCosmosPoints(earnedMarks)
         RewardSystem.shared.recordSession(playTimeMinutes: 1)
+        RewardSystem.shared.recordGameSession(game: "spaceRunner", score: distance, playTimeMinutes: 1)
     }
     
     func stopGame() {
