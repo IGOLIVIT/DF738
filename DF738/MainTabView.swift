@@ -1,23 +1,18 @@
-//
-//  MainTabView.swift
-//  DF738
-//
-
 import SwiftUI
 
 struct MainTabView: View {
-    @StateObject private var rewardSystem = RewardSystem.shared
+    @EnvironmentObject var rewardSystem: RewardSystem
     
     var body: some View {
         TabView {
-            GamesView()
+            HomeView()
                 .tabItem {
                     Label("Games", systemImage: "gamecontroller.fill")
                 }
             
             StatisticsView()
                 .tabItem {
-                    Label("Statistics", systemImage: "chart.bar.fill")
+                    Label("Stats", systemImage: "chart.bar.fill")
                 }
             
             SettingsView()
@@ -25,11 +20,6 @@ struct MainTabView: View {
                     Label("Settings", systemImage: "gear")
                 }
         }
-        .accentColor(Color("ActionPrimary"))
+        .tint(Color("ElementAccent"))
     }
 }
-
-#Preview {
-    MainTabView()
-}
-

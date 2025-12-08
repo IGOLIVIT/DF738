@@ -1,179 +1,156 @@
-//
-//  RewardSystem.swift
-//  DF738
-//
-
-import Foundation
+import SwiftUI
 import Combine
 
-struct GameStats: Codable {
-    var gamesPlayed: Int = 0
-    var highScore: Int = 0
-    var totalScore: Int = 0
-    var totalPlayTimeMinutes: Int = 0
-    var lastPlayed: Date?
-    
-    var averageScore: Double {
-        return gamesPlayed > 0 ? Double(totalScore) / Double(gamesPlayed) : 0
-    }
-}
-
 class RewardSystem: ObservableObject {
-    static let shared = RewardSystem()
-    
-    @Published var stars: Int = 0
-    @Published var trophies: Int = 0
-    @Published var cosmosPoints: Int = 0
-    @Published var totalSessions: Int = 0
+    @Published var gems: Int = 0
+    @Published var powerLevel: Int = 1
+    @Published var achievements: [Achievement] = []
+    @Published var totalGamesPlayed: Int = 0
     @Published var totalPlayTimeMinutes: Int = 0
     
-    // Game-specific statistics
-    @Published var asteroidDashStats = GameStats()
-    @Published var crystalCollectorStats = GameStats()
-    @Published var spaceRunnerStats = GameStats()
-    @Published var cosmicPatternStats = GameStats()
+    private let gemsKey = "neonArcade_gems"
+    private let powerLevelKey = "neonArcade_powerLevel"
+    private let achievementsKey = "neonArcade_achievements"
+    private let gamesPlayedKey = "neonArcade_gamesPlayed"
+    private let playTimeKey = "neonArcade_playTime"
     
-    private let starsKey = "stars"
-    private let trophiesKey = "trophies"
-    private let cosmosPointsKey = "cosmosPoints"
-    private let totalSessionsKey = "totalSessions"
-    private let totalPlayTimeKey = "totalPlayTimeMinutes"
-    
-    private let asteroidDashStatsKey = "asteroidDashStats"
-    private let crystalCollectorStatsKey = "crystalCollectorStats"
-    private let spaceRunnerStatsKey = "spaceRunnerStats"
-    private let cosmicPatternStatsKey = "cosmicPatternStats"
-    
-    private init() {
-        loadRewards()
+    init() {
+        loadProgress()
     }
     
-    func addStars(_ amount: Int) {
-        stars += amount
-        saveRewards()
+    func addGems(_ amount: Int) {
+        gems += amount
+        updatePowerLevel()
+        saveProgress()
     }
     
-    func addTrophies(_ amount: Int) {
-        trophies += amount
-        saveRewards()
+    func recordGameSession(gameName: String, score: Int, duration: Int) {
+        totalGamesPlayed += 1
+        totalPlayTimeMinutes += duration
+        checkAchievements(gameName: gameName, score: score)
+        saveProgress()
     }
     
-    func addCosmosPoints(_ amount: Int) {
-        cosmosPoints += amount
-        saveRewards()
-    }
-    
-    func recordSession(playTimeMinutes: Int = 0) {
-        totalSessions += 1
-        totalPlayTimeMinutes += playTimeMinutes
-        saveRewards()
-    }
-    
-    func recordGameSession(game: String, score: Int, playTimeMinutes: Int) {
-        var stats: GameStats
-        let statsKey: String
-        
-        switch game {
-        case "asteroidDash":
-            stats = asteroidDashStats
-            statsKey = asteroidDashStatsKey
-        case "crystalCollector":
-            stats = crystalCollectorStats
-            statsKey = crystalCollectorStatsKey
-        case "spaceRunner":
-            stats = spaceRunnerStats
-            statsKey = spaceRunnerStatsKey
-        case "cosmicPattern":
-            stats = cosmicPatternStats
-            statsKey = cosmicPatternStatsKey
-        default:
-            return
+    private func updatePowerLevel() {
+        let newLevel = 1 + (gems / 100)
+        if newLevel > powerLevel {
+            powerLevel = newLevel
+            unlockAchievement(.levelUp(powerLevel))
         }
-        
-        stats.gamesPlayed += 1
-        stats.totalScore += score
-        stats.totalPlayTimeMinutes += playTimeMinutes
-        stats.lastPlayed = Date()
-        
-        if score > stats.highScore {
-            stats.highScore = score
+    }
+    
+    private func checkAchievements(gameName: String, score: Int) {
+        if totalGamesPlayed == 1 {
+            unlockAchievement(.firstGame)
         }
-        
-        // Update published property
-        switch game {
-        case "asteroidDash":
-            asteroidDashStats = stats
-        case "crystalCollector":
-            crystalCollectorStats = stats
-        case "spaceRunner":
-            spaceRunnerStats = stats
-        case "cosmicPattern":
-            cosmicPatternStats = stats
-        default:
-            break
+        if totalGamesPlayed == 10 {
+            unlockAchievement(.tenGames)
         }
-        
-        // Save to UserDefaults
-        if let encoded = try? JSONEncoder().encode(stats) {
-            UserDefaults.standard.set(encoded, forKey: statsKey)
+        if totalGamesPlayed == 50 {
+            unlockAchievement(.fiftyGames)
         }
+        if score >= 100 {
+            unlockAchievement(.score100)
+        }
+        if score >= 500 {
+            unlockAchievement(.score500)
+        }
+        if gems >= 1000 {
+            unlockAchievement(.gemCollector)
+        }
+    }
+    
+    private func unlockAchievement(_ type: AchievementType) {
+        guard !achievements.contains(where: { $0.type == type }) else { return }
+        let achievement = Achievement(type: type)
+        achievements.append(achievement)
     }
     
     func resetProgress() {
-        stars = 0
-        trophies = 0
-        cosmosPoints = 0
-        totalSessions = 0
+        gems = 0
+        powerLevel = 1
+        achievements = []
+        totalGamesPlayed = 0
         totalPlayTimeMinutes = 0
-        
-        asteroidDashStats = GameStats()
-        crystalCollectorStats = GameStats()
-        spaceRunnerStats = GameStats()
-        cosmicPatternStats = GameStats()
-        
-        saveRewards()
-        
-        UserDefaults.standard.removeObject(forKey: asteroidDashStatsKey)
-        UserDefaults.standard.removeObject(forKey: crystalCollectorStatsKey)
-        UserDefaults.standard.removeObject(forKey: spaceRunnerStatsKey)
-        UserDefaults.standard.removeObject(forKey: cosmicPatternStatsKey)
+        saveProgress()
     }
     
-    private func saveRewards() {
-        UserDefaults.standard.set(stars, forKey: starsKey)
-        UserDefaults.standard.set(trophies, forKey: trophiesKey)
-        UserDefaults.standard.set(cosmosPoints, forKey: cosmosPointsKey)
-        UserDefaults.standard.set(totalSessions, forKey: totalSessionsKey)
-        UserDefaults.standard.set(totalPlayTimeMinutes, forKey: totalPlayTimeKey)
+    private func saveProgress() {
+        UserDefaults.standard.set(gems, forKey: gemsKey)
+        UserDefaults.standard.set(powerLevel, forKey: powerLevelKey)
+        UserDefaults.standard.set(totalGamesPlayed, forKey: gamesPlayedKey)
+        UserDefaults.standard.set(totalPlayTimeMinutes, forKey: playTimeKey)
+        
+        if let encoded = try? JSONEncoder().encode(achievements) {
+            UserDefaults.standard.set(encoded, forKey: achievementsKey)
+        }
     }
     
-    private func loadRewards() {
-        stars = UserDefaults.standard.integer(forKey: starsKey)
-        trophies = UserDefaults.standard.integer(forKey: trophiesKey)
-        cosmosPoints = UserDefaults.standard.integer(forKey: cosmosPointsKey)
-        totalSessions = UserDefaults.standard.integer(forKey: totalSessionsKey)
-        totalPlayTimeMinutes = UserDefaults.standard.integer(forKey: totalPlayTimeKey)
+    private func loadProgress() {
+        gems = UserDefaults.standard.integer(forKey: gemsKey)
+        powerLevel = max(1, UserDefaults.standard.integer(forKey: powerLevelKey))
+        totalGamesPlayed = UserDefaults.standard.integer(forKey: gamesPlayedKey)
+        totalPlayTimeMinutes = UserDefaults.standard.integer(forKey: playTimeKey)
         
-        // Load game stats
-        if let data = UserDefaults.standard.data(forKey: asteroidDashStatsKey),
-           let stats = try? JSONDecoder().decode(GameStats.self, from: data) {
-            asteroidDashStats = stats
-        }
-        
-        if let data = UserDefaults.standard.data(forKey: crystalCollectorStatsKey),
-           let stats = try? JSONDecoder().decode(GameStats.self, from: data) {
-            crystalCollectorStats = stats
-        }
-        
-        if let data = UserDefaults.standard.data(forKey: spaceRunnerStatsKey),
-           let stats = try? JSONDecoder().decode(GameStats.self, from: data) {
-            spaceRunnerStats = stats
-        }
-        
-        if let data = UserDefaults.standard.data(forKey: cosmicPatternStatsKey),
-           let stats = try? JSONDecoder().decode(GameStats.self, from: data) {
-            cosmicPatternStats = stats
+        if let data = UserDefaults.standard.data(forKey: achievementsKey),
+           let decoded = try? JSONDecoder().decode([Achievement].self, from: data) {
+            achievements = decoded
         }
     }
 }
+
+struct Achievement: Identifiable, Codable, Equatable {
+    let id: UUID
+    let type: AchievementType
+    let unlockedAt: Date
+    
+    init(type: AchievementType) {
+        self.id = UUID()
+        self.type = type
+        self.unlockedAt = Date()
+    }
+    
+    var title: String {
+        type.title
+    }
+    
+    var icon: String {
+        type.icon
+    }
+}
+
+enum AchievementType: Codable, Equatable {
+    case firstGame
+    case tenGames
+    case fiftyGames
+    case score100
+    case score500
+    case gemCollector
+    case levelUp(Int)
+    
+    var title: String {
+        switch self {
+        case .firstGame: return "First Steps"
+        case .tenGames: return "Getting Started"
+        case .fiftyGames: return "Arcade Master"
+        case .score100: return "Century Score"
+        case .score500: return "High Scorer"
+        case .gemCollector: return "Gem Collector"
+        case .levelUp(let level): return "Level \(level) Reached"
+        }
+    }
+    
+    var icon: String {
+        switch self {
+        case .firstGame: return "🎮"
+        case .tenGames: return "🎯"
+        case .fiftyGames: return "👑"
+        case .score100: return "💯"
+        case .score500: return "🌟"
+        case .gemCollector: return "💎"
+        case .levelUp: return "⚡"
+        }
+    }
+}
+
 
