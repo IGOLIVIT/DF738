@@ -10,7 +10,7 @@ struct ContentView: View {
                 MainTabView()
                     .environmentObject(rewardSystem)
             } else {
-                OnboardingView(showOnboarding: $hasCompletedOnboarding)
+                OnboardingView(hasCompletedOnboarding: $hasCompletedOnboarding)
             }
         }
     }

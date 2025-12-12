@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct OnboardingView: View {
-    @Binding var showOnboarding: Bool
+    @Binding var hasCompletedOnboarding: Bool
     @State private var currentPage = 0
     
     var body: some View {
@@ -42,7 +42,7 @@ struct OnboardingView: View {
                     isLast: true,
                     action: {
                         withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) {
-                            showOnboarding = false
+                            hasCompletedOnboarding = true
                         }
                     }
                 )
